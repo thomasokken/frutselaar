@@ -9,12 +9,16 @@
 /* Begin PBXBuildFile section */
 		E95DF6672B1A218B00A4E329 /* FrutselaarView.h in Headers */ = {isa = PBXBuildFile; fileRef = E95DF6662B1A218B00A4E329 /* FrutselaarView.h */; };
 		E95DF6692B1A218B00A4E329 /* FrutselaarView.m in Sources */ = {isa = PBXBuildFile; fileRef = E95DF6682B1A218B00A4E329 /* FrutselaarView.m */; };
+		E9D84CFF2B1E63470028A5F6 /* thumbnail.png in Resources */ = {isa = PBXBuildFile; fileRef = E9D84CFD2B1E63470028A5F6 /* thumbnail.png */; };
+		E9D84D002B1E63470028A5F6 /* thumbnail@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = E9D84CFE2B1E63470028A5F6 /* thumbnail@2x.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		E95DF6632B1A218B00A4E329 /* Frutselaar.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Frutselaar.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		E95DF6662B1A218B00A4E329 /* FrutselaarView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FrutselaarView.h; sourceTree = "<group>"; };
 		E95DF6682B1A218B00A4E329 /* FrutselaarView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FrutselaarView.m; sourceTree = "<group>"; };
+		E9D84CFD2B1E63470028A5F6 /* thumbnail.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = thumbnail.png; sourceTree = "<group>"; };
+		E9D84CFE2B1E63470028A5F6 /* thumbnail@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "thumbnail@2x.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,6 +35,8 @@
 		E95DF6592B1A218B00A4E329 = {
 			isa = PBXGroup;
 			children = (
+				E9D84CFD2B1E63470028A5F6 /* thumbnail.png */,
+				E9D84CFE2B1E63470028A5F6 /* thumbnail@2x.png */,
 				E95DF6652B1A218B00A4E329 /* Frutselaar */,
 				E95DF6642B1A218B00A4E329 /* Products */,
 			);
@@ -122,6 +128,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E9D84CFF2B1E63470028A5F6 /* thumbnail.png in Resources */,
+				E9D84D002B1E63470028A5F6 /* thumbnail@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
