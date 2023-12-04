@@ -9,11 +9,9 @@
 
 #define CELLSIZE 8
 #define LINEWIDTH 1
-#define MAXLENGTH 10
-#define STEP_TIME_MS 100
-#define HOLD_STEPS 20
-
-static int instanceCount = 0;
+#define MAXLENGTH 100
+#define STEP_TIME_MS 50
+#define HOLD_STEPS 40
 
 @implementation FrutselaarView
 
@@ -21,8 +19,6 @@ static int instanceCount = 0;
 {
     self = [super initWithFrame:frame isPreview:isPreview];
     if (self) {
-        instance = instanceCount++;
-        NSLog(@"FRUTS(%d): Initializing", instance);
         path = NULL;
         grid = NULL;
         [self setAnimationTimeInterval:STEP_TIME_MS / 1000.0];
@@ -35,16 +31,19 @@ static int instanceCount = 0;
     return self;
 }
 
+- (BOOL)isFlipped
+{
+    return YES;
+}
+
 - (void)startAnimation
 {
-    NSLog(@"FRUTS(%d): startAnimation", instance);
     grid = (char *) malloc(w * h);
     [super startAnimation];
 }
 
 - (void)stopAnimation
 {
-    NSLog(@"FRUTS(%d): stopAnimation", instance);
     [super stopAnimation];
     free(path);
     path = NULL;
@@ -54,9 +53,8 @@ static int instanceCount = 0;
 
 - (void)drawRect:(NSRect)rect
 {
-    NSLog(@"FRUTS(%d): drawRect [ %g %g %g %g ]", instance, rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
     CGContextRef myContext = (CGContextRef) [[NSGraphicsContext currentContext] CGContext];
-    CGContextSetRGBFillColor(myContext, 0.25, 0.25, 0.25, 1.0);
+    CGContextSetRGBFillColor(myContext, 0, 0, 0, 1.0);
     CGContextFillRect(myContext, NSRectToCGRect(rect));
     
     if (grid == NULL)
@@ -64,12 +62,6 @@ static int instanceCount = 0;
 
     CGContextSetRGBStrokeColor(myContext, 0.0, 1.0, 0.0, 1.0);
     CGContextSetLineWidth(myContext, LINEWIDTH);
-    /*
-    CGContextBeginPath(myContext);
-    CGContextMoveToPoint(myContext, 10, 10);
-    CGContextAddLineToPoint(myContext, pw - 10, ph - 10);
-    CGContextStrokePath(myContext);
-    */
     
     char *cp = grid;
     for (int y = 0; y < h; y++)
@@ -77,7 +69,6 @@ static int instanceCount = 0;
             int c = *cp++;
             if (c < 1 || c > 6)
                 continue;
-            NSLog(@"FRUTS(%d): segment %d at (%d, %d)", instance, c, xoff + x * CELLSIZE, yoff + y * CELLSIZE);
             CGContextBeginPath(myContext);
             switch (c) {
                 case 1: // │
@@ -114,7 +105,6 @@ static int instanceCount = 0;
     if (path == NULL) {
         // Generate path
         retry:
-        NSLog(@"FRUTS(%d): Generating path", instance);
         length = (int) ((random() / 2147483648.0) * MAXLENGTH) + 1;
         path = (char *) malloc(4 * (length + 1));
         bool straight = true;
@@ -136,6 +126,14 @@ static int instanceCount = 0;
         dir = 0;
         int xmax = 0, xmin = 0, ymax = 0, ymin = 0;
         for (int i = 0; i < length; i++) {
+            int d = path[i];
+            if (d != 1) {
+                if (d == 2)
+                    dir--;
+                else
+                    dir++;
+                dir &= 3;
+            }
             switch (dir) {
                 case 0:
                     y--;
@@ -158,14 +156,6 @@ static int instanceCount = 0;
                         xmin = x;
                     break;
             }
-            int d = path[i];
-            if (d != 1) {
-                if (d == 2)
-                    dir--;
-                else
-                    dir++;
-                dir %= 4;
-            }
         }
         if (xmax - xmin + 1 > w || ymax - ymin + 1 > h) {
             free(path);
@@ -184,23 +174,18 @@ static int instanceCount = 0;
     
     if (pos < length) {
         int c = path[pos++];
-        NSLog(@"FRUTS(%d): Drawing cell %d at (%d, %d)", instance, c, x, y);
         switch (dir) {
             case 0:
                 grid[x + y * w] = c == 1 ? 1 : c == 2 ? 5 : 4;
-                y--;
                 break;
             case 1:
                 grid[x + y * w] = c == 1 ? 2 : c == 2 ? 6 : 5;
-                x++;
                 break;
             case 2:
                 grid[x + y * w] = c == 1 ? 1 : c == 2 ? 3 : 6;
-                y++;
                 break;
             case 3:
                 grid[x + y * w] = c == 1 ? 2 : c == 2 ? 4 : 3;
-                x--;
                 break;
         }
         if (c != 1) {
@@ -208,12 +193,17 @@ static int instanceCount = 0;
                 dir--;
             else
                 dir++;
-            dir %= 4;
+            dir &= 3;
+        }
+        switch (dir) {
+            case 0: y--; break;
+            case 1: x++; break;
+            case 2: y++; break;
+            case 3: x--; break;
         }
         // TODO: Don't call setNeedsDisplayInRect, but draw the cell immediately
         [self setNeedsDisplayInRect:CGRectMake(0, 0, pw, ph)];
     } else {
-        NSLog(@"FRUTS(%d): Waiting", instance);
         pos++;
         if (pos - length > HOLD_STEPS) {
             free(path);

@@ -15,7 +15,6 @@
     char *grid;
     int delay;
     int x, y, xoff, yoff, dir;
-    int instance;
 }
 
 @end
