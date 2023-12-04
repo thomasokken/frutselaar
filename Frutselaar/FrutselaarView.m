@@ -61,7 +61,7 @@
         return;
 
     CGContextSetRGBStrokeColor(myContext, 0.0, 1.0, 0.0, 1.0);
-    CGContextSetLineWidth(myContext, scale / 8);
+    CGContextSetLineWidth(myContext, scale / 8.0);
     
     char *cp = grid;
     for (int y = 0; y < GRIDSIZE; y++)
