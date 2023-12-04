@@ -8,8 +8,7 @@
 #import <ScreenSaver/ScreenSaver.h>
 
 @interface FrutselaarView : ScreenSaverView {
-    int pw, ph;
-    int w, h;
+    int pw, ph, scale;
     int length, pos;
     char *path;
     char *grid;

@@ -7,8 +7,7 @@
 
 #import "FrutselaarView.h"
 
-#define CELLSIZE 8
-#define LINEWIDTH 1
+#define GRIDSIZE 25
 #define MAXLENGTH 100
 #define STEP_TIME_MS 50
 #define HOLD_STEPS 40
@@ -22,8 +21,9 @@
         path = NULL;
         grid = NULL;
         [self setAnimationTimeInterval:STEP_TIME_MS / 1000.0];
-        w = (int) (frame.size.width / CELLSIZE);
-        h = (int) (frame.size.height / CELLSIZE);
+        scale = (int) ((frame.size.width < frame.size.height ? frame.size.width : frame.size.height) / GRIDSIZE);
+        if (scale >= 8)
+            scale &= ~7;
         srandom((unsigned int) time(NULL));
         pw = (int) frame.size.width;
         ph = (int) frame.size.height;
@@ -38,7 +38,7 @@
 
 - (void)startAnimation
 {
-    grid = (char *) malloc(w * h);
+    grid = (char *) malloc(GRIDSIZE * GRIDSIZE);
     [super startAnimation];
 }
 
@@ -61,39 +61,39 @@
         return;
 
     CGContextSetRGBStrokeColor(myContext, 0.0, 1.0, 0.0, 1.0);
-    CGContextSetLineWidth(myContext, LINEWIDTH);
+    CGContextSetLineWidth(myContext, scale / 8);
     
     char *cp = grid;
-    for (int y = 0; y < h; y++)
-        for (int x = 0; x < w; x++) {
+    for (int y = 0; y < GRIDSIZE; y++)
+        for (int x = 0; x < GRIDSIZE; x++) {
             int c = *cp++;
             if (c < 1 || c > 6)
                 continue;
             CGContextBeginPath(myContext);
             switch (c) {
                 case 1: // │
-                    CGContextMoveToPoint(myContext, xoff + (x + 0.5) * CELLSIZE, yoff + y * CELLSIZE);
-                    CGContextAddLineToPoint(myContext, xoff + (x + 0.5) * CELLSIZE, yoff + (y + 1) * CELLSIZE);
+                    CGContextMoveToPoint(myContext, xoff + (x + 0.5) * scale, yoff + y * scale);
+                    CGContextAddLineToPoint(myContext, xoff + (x + 0.5) * scale, yoff + (y + 1) * scale);
                     break;
                 case 2: // ─
-                    CGContextMoveToPoint(myContext, xoff + x * CELLSIZE, yoff + (y + 0.5) * CELLSIZE);
-                    CGContextAddLineToPoint(myContext, xoff + (x + 1) * CELLSIZE, yoff + (y + 0.5) * CELLSIZE);
+                    CGContextMoveToPoint(myContext, xoff + x * scale, yoff + (y + 0.5) * scale);
+                    CGContextAddLineToPoint(myContext, xoff + (x + 1) * scale, yoff + (y + 0.5) * scale);
                     break;
                 case 3: // └
-                    CGContextMoveToPoint(myContext, xoff + (x + 0.5) * CELLSIZE, yoff + y * CELLSIZE);
-                    CGContextAddArcToPoint(myContext, xoff + (x + 0.5) * CELLSIZE, yoff + (y + 0.5) * CELLSIZE, xoff + (x + 1) * CELLSIZE, yoff + (y + 0.5) * CELLSIZE, 0.5 * CELLSIZE);
+                    CGContextMoveToPoint(myContext, xoff + (x + 0.5) * scale, yoff + y * scale);
+                    CGContextAddArcToPoint(myContext, xoff + (x + 0.5) * scale, yoff + (y + 0.5) * scale, xoff + (x + 1) * scale, yoff + (y + 0.5) * scale, 0.5 * scale);
                     break;
                 case 4: // ┌
-                    CGContextMoveToPoint(myContext, xoff + (x + 0.5) * CELLSIZE, yoff + (y + 1) * CELLSIZE);
-                    CGContextAddArcToPoint(myContext, xoff + (x + 0.5) * CELLSIZE, yoff + (y + 0.5) * CELLSIZE, xoff + (x + 1) * CELLSIZE, yoff + (y + 0.5) * CELLSIZE, 0.5 * CELLSIZE);
+                    CGContextMoveToPoint(myContext, xoff + (x + 0.5) * scale, yoff + (y + 1) * scale);
+                    CGContextAddArcToPoint(myContext, xoff + (x + 0.5) * scale, yoff + (y + 0.5) * scale, xoff + (x + 1) * scale, yoff + (y + 0.5) * scale, 0.5 * scale);
                     break;
                 case 5: // ┐
-                    CGContextMoveToPoint(myContext, xoff + x * CELLSIZE, yoff + (y + 0.5) * CELLSIZE);
-                    CGContextAddArcToPoint(myContext, xoff + (x + 0.5) * CELLSIZE, yoff + (y + 0.5) * CELLSIZE, xoff + (x + 0.5) * CELLSIZE, yoff + (y + 1) * CELLSIZE, 0.5 * CELLSIZE);
+                    CGContextMoveToPoint(myContext, xoff + x * scale, yoff + (y + 0.5) * scale);
+                    CGContextAddArcToPoint(myContext, xoff + (x + 0.5) * scale, yoff + (y + 0.5) * scale, xoff + (x + 0.5) * scale, yoff + (y + 1) * scale, 0.5 * scale);
                     break;
                 case 6: // ┘
-                    CGContextMoveToPoint(myContext, xoff + x * CELLSIZE, yoff + (y + 0.5) * CELLSIZE);
-                    CGContextAddArcToPoint(myContext, xoff + (x + 0.5) * CELLSIZE, yoff + (y + 0.5) * CELLSIZE, xoff + (x + 0.5) * CELLSIZE, yoff + y * CELLSIZE, 0.5 * CELLSIZE);
+                    CGContextMoveToPoint(myContext, xoff + x * scale, yoff + (y + 0.5) * scale);
+                    CGContextAddArcToPoint(myContext, xoff + (x + 0.5) * scale, yoff + (y + 0.5) * scale, xoff + (x + 0.5) * scale, yoff + y * scale, 0.5 * scale);
                     break;
             }
             CGContextStrokePath(myContext);
@@ -157,7 +157,7 @@
                     break;
             }
         }
-        if (xmax - xmin + 1 > w || ymax - ymin + 1 > h) {
+        if (xmax - xmin + 1 > GRIDSIZE || ymax - ymin + 1 > GRIDSIZE) {
             free(path);
             goto retry;
         }
@@ -165,27 +165,27 @@
         // We have a good path; final initializations
         x = -xmin;
         y = -ymin;
-        xoff = (pw - (xmax - xmin + 1) * CELLSIZE) / 2;
-        yoff = (ph - (ymax - ymin + 1) * CELLSIZE) / 2;
+        xoff = (pw - (xmax - xmin + 1) * scale) / 2;
+        yoff = (ph - (ymax - ymin + 1) * scale) / 2;
         dir = 0;
         pos = 0;
-        memset(grid, 0, w * h);
+        memset(grid, 0, GRIDSIZE * GRIDSIZE);
     }
     
     if (pos < length) {
         int c = path[pos++];
         switch (dir) {
             case 0:
-                grid[x + y * w] = c == 1 ? 1 : c == 2 ? 5 : 4;
+                grid[x + y * GRIDSIZE] = c == 1 ? 1 : c == 2 ? 5 : 4;
                 break;
             case 1:
-                grid[x + y * w] = c == 1 ? 2 : c == 2 ? 6 : 5;
+                grid[x + y * GRIDSIZE] = c == 1 ? 2 : c == 2 ? 6 : 5;
                 break;
             case 2:
-                grid[x + y * w] = c == 1 ? 1 : c == 2 ? 3 : 6;
+                grid[x + y * GRIDSIZE] = c == 1 ? 1 : c == 2 ? 3 : 6;
                 break;
             case 3:
-                grid[x + y * w] = c == 1 ? 2 : c == 2 ? 4 : 3;
+                grid[x + y * GRIDSIZE] = c == 1 ? 2 : c == 2 ? 4 : 3;
                 break;
         }
         if (c != 1) {
