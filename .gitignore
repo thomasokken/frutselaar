@@ -1,1 +1,7 @@
-mac/Frutselaar.xcodeproj/project.xcworkspace/xcuserdata
+# /mac/Frutselaar.xcodeproj/project.xcworkspace/
+/mac/Frutselaar.xcodeproj/project.xcworkspace/xcuserdata
+
+# /windows/
+/windows/*.vcxproj.filters
+/windows/*.vcxproj.user
+/windows/.vs
