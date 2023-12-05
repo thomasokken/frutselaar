@@ -201,7 +201,13 @@
             case 2: y++; break;
             case 3: x--; break;
         }
-        // TODO: Don't call setNeedsDisplayInRect, but draw the cell immediately
+        
+        // This looks inefficient, but even when I ask for only the current
+        // cell to be invalidated, the system ends up calling drawRect with
+        // the whole screen anyway.
+        // Also, I couldn't get immediate drawing to work.
+        // So this may look inefficient and lazy, but I don't see how to
+        // do this better.
         [self setNeedsDisplayInRect:CGRectMake(0, 0, pw, ph)];
     } else {
         pos++;
