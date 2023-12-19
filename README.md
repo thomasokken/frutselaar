@@ -1,7 +1,7 @@
 # Frutselaar
 
 [Frutselaar for MacOS—download here](https://github.com/thomasokken/frutselaar/releases).  
-For MacOS 10.14 (Mojave) or later.
+For MacOS 10.13 (High Sierra) or later.
 
 ![Screenshot of Frutselaar](screenshot.png)
 
