@@ -1,180 +1,270 @@
-// Frutselaar.cpp : Defines the entry point for the application.
+//
+//  FrutselaarView.cpp
+//  Frutselaar
+//
+//  Created by Thomas Okken on 16-12-2024.
 //
 
-#include "framework.h"
-#include "Frutselaar.h"
+// Windows Header Files
+#include <windows.h>
+//#include <wingdi.h>
+#include <ScrnSave.h>
+// C RunTime Header Files
+#include <stdlib.h>
+#include <malloc.h>
+#include <memory.h>
+#include <tchar.h>
 
-#define MAX_LOADSTRING 100
+#define GRIDSIZE 25
+#define MAXLENGTH 100
+#define STEP_TIME_MS 50
+#define HOLD_STEPS 40
 
-// Global Variables:
-HINSTANCE hInst;                                // current instance
-WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+static int pw, ph, scale;
+static int length, pos;
+static char *path;
+static char *grid;
+static int delay;
+static int x, y, xoff, yoff, dir;
 
-// Forward declarations of functions included in this code module:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+static UINT_PTR timer = 0;
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
-{
-    UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
-
-    // TODO: Place code here.
-
-    // Initialize global strings
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_FRUTSELAAR, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
-
-    // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
-    {
-        return FALSE;
-    }
-
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_FRUTSELAAR));
-
-    MSG msg;
-
-    // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
-
-    return (int) msg.wParam;
-}
-
-
-
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
-    WNDCLASSEXW wcex;
-
-    wcex.cbSize = sizeof(WNDCLASSEX);
-
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_FRUTSELAAR));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_FRUTSELAAR);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    return RegisterClassExW(&wcex);
-}
-
-//
-//   FUNCTION: InitInstance(HINSTANCE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   hInst = hInstance; // Store instance handle in our global variable
-
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
-}
-
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE: Processes messages for the main window.
-//
-//  WM_COMMAND  - process the application menu
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI ScreenSaverProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-    case WM_COMMAND:
+        case WM_CREATE:
         {
-            int wmId = LOWORD(wParam);
-            // Parse the menu selections:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
+            wcscpy_s(szAppName, L"Frutselaar");
+            wcscpy_s(szIniFile, L"");
+
+            path = NULL;
+            grid = NULL;
+            RECT r;
+            GetClientRect(hwnd, &r);
+            long width = r.right - r.left;
+            long height = r.bottom - r.top;
+            scale = (int) ((width < height ? width : height) / GRIDSIZE);
+            if (scale >= 8)
+                scale &= ~7;
+            srand((unsigned int) GetTickCount());
+            pw = (int) width;
+            ph = (int) height;
+
+            grid = (char *) malloc(GRIDSIZE * GRIDSIZE);
+            path = NULL;
+
+            timer = SetTimer(hwnd, 1, STEP_TIME_MS, NULL);
+            break;
+        }
+
+        case WM_ERASEBKGND:
+        {
+            HDC hdc = GetDC(hwnd);
+            RECT r;
+            GetClientRect(hwnd, &r);
+            FillRect(hdc, &r, (HBRUSH) GetStockObject(BLACK_BRUSH));
+            ReleaseDC(hwnd, hdc);
+            break;
+        }
+
+        case WM_TIMER:
+        {
+            if (path == NULL) {
+                // Generate path
+                retry:
+                length = (int) ((rand() / (double) RAND_MAX) * MAXLENGTH) + 1;
+                path = (char*) malloc(4 * (length + 1));
+                bool straight = true;
+                for (int i = 0; i < length; i++) {
+                    int d = (int) ((rand() / (double) RAND_MAX) * 3) + 1;
+                    path[i] = d;
+                    if (d != 1)
+                        straight = !straight;
+                }
+                if (straight)
+                    path[length++] = (int) ((rand() / (double) RAND_MAX) * 2) + 2;
+                memcpy(path + length, path, length);
+                memcpy(path + 2 * length, path, 2 * length);
+                length *= 4;
+
+                // Figure out path size
+                x = 0;
+                y = 0;
+                dir = 0;
+                int xmax = 0, xmin = 0, ymax = 0, ymin = 0;
+                for (int i = 0; i < length; i++) {
+                    int d = path[i];
+                    if (d != 1) {
+                        if (d == 2)
+                            dir--;
+                        else
+                            dir++;
+                        dir &= 3;
+                    }
+                    switch (dir) {
+                        case 0:
+                            y--;
+                            if (y < ymin)
+                                ymin = y;
+                            break;
+                        case 1:
+                            x++;
+                            if (x > xmax)
+                                xmax = x;
+                            break;
+                        case 2:
+                            y++;
+                            if (y > ymax)
+                                ymax = y;
+                            break;
+                        case 3:
+                            x--;
+                            if (x < xmin)
+                                xmin = x;
+                            break;
+                    }
+                }
+                if (xmax - xmin + 1 > GRIDSIZE || ymax - ymin + 1 > GRIDSIZE) {
+                    free(path);
+                    goto retry;
+                }
+
+                // We have a good path; final initializations
+                x = -xmin;
+                y = -ymin;
+                xoff = (pw - (xmax - xmin + 1) * scale) / 2;
+                yoff = (ph - (ymax - ymin + 1) * scale) / 2;
+                dir = 0;
+                pos = 0;
+                memset(grid, 0, GRIDSIZE * GRIDSIZE);
             }
+
+            if (pos < length) {
+                int c = path[pos++];
+                switch (dir) {
+                    case 0:
+                        grid[x + y * GRIDSIZE] = c == 1 ? 1 : c == 2 ? 5 : 4;
+                        break;
+                    case 1:
+                        grid[x + y * GRIDSIZE] = c == 1 ? 2 : c == 2 ? 6 : 5;
+                        break;
+                    case 2:
+                        grid[x + y * GRIDSIZE] = c == 1 ? 1 : c == 2 ? 3 : 6;
+                        break;
+                    case 3:
+                        grid[x + y * GRIDSIZE] = c == 1 ? 2 : c == 2 ? 4 : 3;
+                        break;
+                }
+                if (c != 1) {
+                    if (c == 2)
+                        dir--;
+                    else
+                        dir++;
+                    dir &= 3;
+                }
+
+                HDC hdc = GetDC(hwnd);
+                RECT r;
+                r.left = xoff + x * scale;
+                r.top = yoff + y * scale;
+                r.right = r.left + scale;
+                r.bottom = r.top + scale;
+                HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
+                FillRect(hdc, &r, brush);
+                DeleteObject(brush);
+                c = grid[x + y * GRIDSIZE];
+                HPEN pen = CreatePen(PS_SOLID, scale / 8, RGB(0, 255, 0));
+                HPEN oldPen = (HPEN) SelectObject(hdc, pen);
+                switch (c) {
+                    case 1: // │
+                        MoveToEx(hdc, xoff + (x + 0.5) * scale, yoff + y * scale, NULL);
+                        LineTo(hdc, xoff + (x + 0.5) * scale, yoff + (y + 1) * scale);
+                        break;
+                    case 2: // ─
+                        MoveToEx(hdc, xoff + x * scale, yoff + (y + 0.5) * scale, NULL);
+                        LineTo(hdc, xoff + (x + 1) * scale, yoff + (y + 0.5) * scale);
+                        break;
+                    case 3: // └
+                        Arc(hdc,
+                            xoff + (x + 0.5) * scale, yoff + (y - 0.5) * scale,
+                            xoff + (x + 1.5) * scale, yoff + (y + 0.5) * scale,
+                            xoff + (x + 0.5) * scale, yoff + y * scale,
+                            xoff + (x + 1) * scale, yoff + (y + 0.5) * scale);
+                        break;
+                    case 4: // ┌
+                        Arc(hdc,
+                            xoff + (x + 0.5) * scale, yoff + (y + 0.5) * scale,
+                            xoff + (x + 1.5) * scale, yoff + (y + 1.5) * scale,
+                            xoff + (x + 1) * scale, yoff + (y + 0.5) * scale,
+                            xoff + (x + 0.5) * scale, yoff + (y + 1) * scale);
+                        break;
+                    case 5: // ┐
+                        Arc(hdc,
+                            xoff + (x - 0.5) * scale, yoff + (y + 0.5) * scale,
+                            xoff + (x + 0.5) * scale, yoff + (y + 1.5) * scale,
+                            xoff + (x + 0.5) * scale, yoff + (y + 1) * scale,
+                            xoff + x * scale, yoff + (y + 0.5) * scale);
+                        break;
+                    case 6: // ┘
+                        Arc(hdc,
+                            xoff + (x - 0.5) * scale, yoff + (y - 0.5) * scale,
+                            xoff + (x + 0.5) * scale, yoff + (y + 0.5) * scale,
+                            xoff + x * scale, yoff + (y + 0.5) * scale,
+                            xoff + (x + 0.5) * scale, yoff + y * scale);
+                        break;
+                }
+                SelectObject(hdc, oldPen);
+                DeleteObject(pen);
+                ReleaseDC(hwnd, hdc);
+
+                switch (dir) {
+                    case 0: y--; break;
+                    case 1: x++; break;
+                    case 2: y++; break;
+                    case 3: x--; break;
+                }
+            } else {
+                pos++;
+                if (pos - length > HOLD_STEPS) {
+                    free(path);
+                    path = NULL;
+                    HDC hdc = GetDC(hwnd);
+                    RECT r;
+                    GetClientRect(hwnd, &r);
+                    FillRect(hdc, &r, (HBRUSH) GetStockObject(BLACK_BRUSH));
+                    ReleaseDC(hwnd, hdc);
+                }
+            }
+            break;
         }
-        break;
-    case WM_PAINT:
+
+        case WM_DESTROY:
         {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
-            EndPaint(hWnd, &ps);
+            if (timer != 0) {
+                KillTimer(hwnd, timer);
+                timer = 0;
+            }
+            free(grid);
+            grid = NULL;
+            free(path);
+            path = NULL;
+            break;
         }
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
     }
-    return 0;
+
+    // DefScreenSaverProc processes any messages ignored by ScreenSaverProc. 
+    return DefScreenSaverProc(hwnd, message, wParam, lParam);
 }
 
-// Message handler for about box.
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+BOOL WINAPI ScreenSaverConfigureDialog(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
+    // Should never be called
+    return TRUE;
+}
 
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
+BOOL WINAPI RegisterDialogClasses(HANDLE hInst)
+{
+    // Should never be called
+    return TRUE;
 }

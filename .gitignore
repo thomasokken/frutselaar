@@ -5,3 +5,6 @@
 /windows/*.vcxproj.filters
 /windows/*.vcxproj.user
 /windows/.vs
+/windows/*.aps
+/windows/Debug
+/windows/Frutselaar

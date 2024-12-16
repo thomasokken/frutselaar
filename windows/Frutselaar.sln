@@ -25,8 +25,8 @@ Global
 		{34D8B98D-7300-46EC-92FF-727F03CD26B3}.Release|arm64.Build.0 = Release|arm64
 		{34D8B98D-7300-46EC-92FF-727F03CD26B3}.Release|x64.ActiveCfg = Release|x64
 		{34D8B98D-7300-46EC-92FF-727F03CD26B3}.Release|x64.Build.0 = Release|x64
-		{34D8B98D-7300-46EC-92FF-727F03CD26B3}.Release|x86.ActiveCfg = Release|Win32
-		{34D8B98D-7300-46EC-92FF-727F03CD26B3}.Release|x86.Build.0 = Release|Win32
+		{34D8B98D-7300-46EC-92FF-727F03CD26B3}.Release|x86.ActiveCfg = Debug|Win32
+		{34D8B98D-7300-46EC-92FF-727F03CD26B3}.Release|x86.Build.0 = Debug|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
