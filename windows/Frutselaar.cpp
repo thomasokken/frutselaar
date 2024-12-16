@@ -1,5 +1,5 @@
 //
-//  FrutselaarView.cpp
+//  Frutselaar.cpp
 //  Frutselaar
 //
 //  Created by Thomas Okken on 16-12-2024.
@@ -170,9 +170,7 @@ LRESULT WINAPI ScreenSaverProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
                 r.top = yoff + y * scale;
                 r.right = r.left + scale;
                 r.bottom = r.top + scale;
-                HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
-                FillRect(hdc, &r, brush);
-                DeleteObject(brush);
+                FillRect(hdc, &r, (HBRUSH) GetStockObject(BLACK_BRUSH));
                 c = grid[x + y * GRIDSIZE];
                 HPEN pen = CreatePen(PS_SOLID, scale / 8, RGB(0, 255, 0));
                 HPEN oldPen = (HPEN) SelectObject(hdc, pen);
