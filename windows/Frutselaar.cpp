@@ -7,13 +7,17 @@
 
 // Windows Header Files
 #include <windows.h>
-//#include <wingdi.h>
+#include <gdiplus.h>
 #include <ScrnSave.h>
 // C RunTime Header Files
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+
+using namespace Gdiplus;
+
+ULONG_PTR gdiplusToken;
 
 #define GRIDSIZE 25
 #define MAXLENGTH 100
@@ -37,6 +41,9 @@ LRESULT WINAPI ScreenSaverProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         {
             wcscpy_s(szAppName, L"Frutselaar");
             wcscpy_s(szIniFile, L"");
+
+            GdiplusStartupInput gdiplusStartupInput;
+            GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
             path = NULL;
             grid = NULL;
@@ -165,55 +172,41 @@ LRESULT WINAPI ScreenSaverProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
                 }
 
                 HDC hdc = GetDC(hwnd);
-                RECT r;
-                r.left = xoff + x * scale;
-                r.top = yoff + y * scale;
-                r.right = r.left + scale;
-                r.bottom = r.top + scale;
-                FillRect(hdc, &r, (HBRUSH) GetStockObject(BLACK_BRUSH));
+                Gdiplus::Graphics g(hdc);
+                SolidBrush black(Color(0, 0, 0));
+                g.FillRectangle(&black, (REAL) (xoff + x * scale), (REAL) (yoff + y * scale), (REAL) scale, (REAL) scale);
+                Pen green(Color(0, 255, 0), (REAL) (scale / 8.0));
                 c = grid[x + y * GRIDSIZE];
-                HPEN pen = CreatePen(PS_SOLID, scale / 8, RGB(0, 255, 0));
-                HPEN oldPen = (HPEN) SelectObject(hdc, pen);
                 switch (c) {
                     case 1: // │
-                        MoveToEx(hdc, xoff + (x + 0.5) * scale, yoff + y * scale, NULL);
-                        LineTo(hdc, xoff + (x + 0.5) * scale, yoff + (y + 1) * scale);
+                        g.DrawLine(&green, (REAL) (xoff + (x + 0.5) * scale), (REAL) (yoff + y * scale),
+                                   (REAL) (xoff + (x + 0.5) * scale), (REAL) (yoff + (y + 1) * scale));
                         break;
                     case 2: // ─
-                        MoveToEx(hdc, xoff + x * scale, yoff + (y + 0.5) * scale, NULL);
-                        LineTo(hdc, xoff + (x + 1) * scale, yoff + (y + 0.5) * scale);
+                        g.DrawLine(&green, (REAL) (xoff + x * scale), (REAL) (yoff + (y + 0.5) * scale),
+                                   (REAL) (xoff + (x + 1) * scale), (REAL) (yoff + (y + 0.5) * scale));
                         break;
                     case 3: // └
-                        Arc(hdc,
-                            xoff + (x + 0.5) * scale, yoff + (y - 0.5) * scale,
-                            xoff + (x + 1.5) * scale, yoff + (y + 0.5) * scale,
-                            xoff + (x + 0.5) * scale, yoff + y * scale,
-                            xoff + (x + 1) * scale, yoff + (y + 0.5) * scale);
+                        g.DrawArc(&green,
+                            (REAL) (xoff + (x + 0.5) * scale), (REAL) (yoff + (y - 0.5) * scale),
+                            (REAL) scale, (REAL) scale, 90, 90);
                         break;
                     case 4: // ┌
-                        Arc(hdc,
-                            xoff + (x + 0.5) * scale, yoff + (y + 0.5) * scale,
-                            xoff + (x + 1.5) * scale, yoff + (y + 1.5) * scale,
-                            xoff + (x + 1) * scale, yoff + (y + 0.5) * scale,
-                            xoff + (x + 0.5) * scale, yoff + (y + 1) * scale);
+                        g.DrawArc(&green,
+                            (REAL) (xoff + (x + 0.5) * scale), (REAL) (yoff + (y + 0.5) * scale),
+                            (REAL) scale, (REAL) scale, 180, 90);
                         break;
                     case 5: // ┐
-                        Arc(hdc,
-                            xoff + (x - 0.5) * scale, yoff + (y + 0.5) * scale,
-                            xoff + (x + 0.5) * scale, yoff + (y + 1.5) * scale,
-                            xoff + (x + 0.5) * scale, yoff + (y + 1) * scale,
-                            xoff + x * scale, yoff + (y + 0.5) * scale);
+                        g.DrawArc(&green,
+                            (REAL) (xoff + (x - 0.5) * scale), (REAL) (yoff + (y + 0.5) * scale),
+                            (REAL) scale, (REAL) scale, 270, 90);
                         break;
                     case 6: // ┘
-                        Arc(hdc,
-                            xoff + (x - 0.5) * scale, yoff + (y - 0.5) * scale,
-                            xoff + (x + 0.5) * scale, yoff + (y + 0.5) * scale,
-                            xoff + x * scale, yoff + (y + 0.5) * scale,
-                            xoff + (x + 0.5) * scale, yoff + y * scale);
+                        g.DrawArc(&green,
+                            (REAL) (xoff + (x - 0.5) * scale), (REAL) (yoff + (y - 0.5) * scale),
+                            (REAL) scale, (REAL) scale, 0, 90);
                         break;
                 }
-                SelectObject(hdc, oldPen);
-                DeleteObject(pen);
                 ReleaseDC(hwnd, hdc);
 
                 switch (dir) {
@@ -247,6 +240,8 @@ LRESULT WINAPI ScreenSaverProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             grid = NULL;
             free(path);
             path = NULL;
+
+            GdiplusShutdown(gdiplusToken);
             break;
         }
     }
