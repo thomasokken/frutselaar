@@ -3,7 +3,6 @@
 // Used by Frutselaar.rc
 //
 #define IDI_FRUTSELAAR                  107
-#define IDI_SMALL                       108
 
 // Next default values for new objects
 // 
